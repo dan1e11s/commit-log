@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, RefreshCw, Copy, Check, ExternalLink, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface Project {
     id: string;
@@ -97,29 +102,33 @@ export default function ProjectDetailPage() {
         return true;
     });
 
+    const getTypeBadgeVariant = (type: string) => {
+        if (type === "FEAT") return "success";
+        if (type === "FIX") return "info";
+        return "secondary";
+    };
+
     const getTypeLabel = (type: string) => {
-        if (type === "FEAT") return { label: "Новое", color: "bg-green-100 text-green-800" };
-        if (type === "FIX") return { label: "Исправлено", color: "bg-blue-100 text-blue-800" };
-        return { label: "Улучшено", color: "bg-gray-100 text-gray-800" };
+        if (type === "FEAT") return "Новое";
+        if (type === "FIX") return "Исправлено";
+        return "Улучшено";
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
 
     if (!project) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-2">Проект не найден</h2>
-                    <Link href="/dashboard" className="text-blue-600 hover:text-blue-700">
-                        Вернуться к проектам
-                    </Link>
-                </div>
+            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+                <h2 className="text-2xl font-bold mb-2">Проект не найден</h2>
+                <Button asChild variant="link">
+                    <Link href="/dashboard">Вернуться к проектам</Link>
+                </Button>
             </div>
         );
     }
@@ -127,19 +136,14 @@ export default function ProjectDetailPage() {
     const embedCode = `<script src="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/widget.js" data-id="${project.apiKey}"></script>`;
 
     return (
-        <div>
-            <div className="mb-8 animate-fade-in-up">
-                <Link
-                    href="/dashboard"
-                    className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 mb-4 group w-fit"
-                >
-                    <div className="p-1 rounded-full bg-secondary group-hover:bg-primary/10 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </div>
-                    Назад к проектам
-                </Link>
+        <div className="max-w-5xl mx-auto">
+            <div className="mb-8">
+                <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary mb-4">
+                    <Link href="/dashboard">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Назад к проектам
+                    </Link>
+                </Button>
 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
@@ -149,28 +153,25 @@ export default function ProjectDetailPage() {
                             {project.repoFullName}
                         </p>
                     </div>
-                    <button
-                        onClick={handleSync}
-                        disabled={syncing}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95 font-medium disabled:opacity-50 flex items-center gap-2"
-                    >
+                    <Button onClick={handleSync} disabled={syncing} className="shadow-lg shadow-primary/20">
                         {syncing ? (
                             <>
-                                <span className="animate-spin w-4 h-4 border-2 border-white/50 border-t-white rounded-full" />
+                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                                 Синхронизация...
                             </>
                         ) : (
                             <>
-                                <span className="text-lg">🔄</span> Синхронизировать
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Синхронизировать
                             </>
                         )}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-border mb-8 animate-fade-in-up [animation-delay:100ms]">
-                <div className="flex gap-8">
+            <div className="border-b border-border mb-8">
+                <div className="flex gap-6">
                     <button
                         onClick={() => setActiveTab("changelogs")}
                         className={`pb-4 px-2 border-b-2 transition-all font-medium text-sm ${activeTab === "changelogs"
@@ -194,74 +195,64 @@ export default function ProjectDetailPage() {
 
             {/* Changelogs Tab */}
             {activeTab === "changelogs" && (
-                <div className="animate-fade-in-up [animation-delay:200ms]">
-                    <div className="flex gap-2 mb-6 p-1 bg-muted/50 rounded-xl w-fit border border-border">
-                        <button
-                            onClick={() => setFilter("all")}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === "all" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            Все ({changelogs.length})
-                        </button>
-                        <button
-                            onClick={() => setFilter("draft")}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === "draft" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            Черновики ({changelogs.filter((l) => l.status === "DRAFT").length})
-                        </button>
-                        <button
-                            onClick={() => setFilter("published")}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === "published" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            Опубликовано ({changelogs.filter((l) => l.status === "PUBLISHED").length})
-                        </button>
+                <div className="space-y-6">
+                    <div className="flex gap-2 p-1 bg-muted/50 rounded-xl w-fit border border-border">
+                        {(["all", "draft", "published"] as const).map((f) => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === f
+                                    ? "bg-background text-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                            >
+                                {f === "all" ? "Все" : f === "draft" ? "Черновики" : "Опубликовано"}
+                                <span className="ml-2 opacity-60 text-xs">
+                                    {f === "all"
+                                        ? changelogs.length
+                                        : changelogs.filter(l => f === "draft" ? l.status === "DRAFT" : l.status === "PUBLISHED").length}
+                                </span>
+                            </button>
+                        ))}
                     </div>
 
                     {filteredChangelogs.length === 0 ? (
-                        <div className="bg-card rounded-2xl border border-dashed border-border p-12 text-center">
-                            <p className="text-muted-foreground">Нет чейнджлогов. Нажмите &quot;Синхронизировать&quot;.</p>
-                        </div>
+                        <Card className="border-dashed border-2 bg-muted/30">
+                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                <p className="text-muted-foreground mb-4">Нет чейнджлогов. Нажмите &quot;Синхронизировать&quot;.</p>
+                                <Button onClick={handleSync} variant="outline">
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Синхронизировать
+                                </Button>
+                            </CardContent>
+                        </Card>
                     ) : (
-                        <div className="space-y-3">
-                            {filteredChangelogs.map((log) => {
-                                const typeInfo = getTypeLabel(log.type);
-                                return (
-                                    <Link
-                                        key={log.id}
-                                        href={`/dashboard/projects/${params.id}/changelogs/${log.id}`}
-                                        className="block bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-all hover:shadow-md group"
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-3">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${typeInfo.color}`}>
-                                                        {typeInfo.label}
-                                                    </span>
-                                                    <span
-                                                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${log.status === "PUBLISHED"
-                                                            ? "bg-green-500/10 text-green-600"
-                                                            : "bg-yellow-500/10 text-yellow-600"
-                                                            }`}
-                                                    >
+                        <div className="space-y-4">
+                            {filteredChangelogs.map((log) => (
+                                <Link key={log.id} href={`/dashboard/projects/${params.id}/changelogs/${log.id}`}>
+                                    <Card className="hover:border-primary/50 transition-all hover:shadow-md group">
+                                        <CardContent className="p-6 flex items-center justify-between">
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant={getTypeBadgeVariant(log.type) as any} className="uppercase tracking-wider">
+                                                        {getTypeLabel(log.type)}
+                                                    </Badge>
+                                                    <Badge variant={log.status === "PUBLISHED" ? "success" : "warning"} className="uppercase tracking-wider">
                                                         {log.status === "PUBLISHED" ? "Опубликовано" : "Черновик"}
-                                                    </span>
+                                                    </Badge>
                                                 </div>
-                                                <h3 className="font-bold font-heading text-lg mb-1 group-hover:text-primary transition-colors">{log.title}</h3>
+                                                <h3 className="font-bold font-heading text-lg group-hover:text-primary transition-colors">
+                                                    {log.title}
+                                                </h3>
                                                 <p className="text-sm text-muted-foreground">
                                                     {new Date(log.createdAt).toLocaleDateString("ru", { day: 'numeric', month: 'long', year: 'numeric' })}
                                                 </p>
                                             </div>
-                                            <div className="text-muted-foreground group-hover:text-primary transition-colors">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
+                                            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -269,40 +260,58 @@ export default function ProjectDetailPage() {
 
             {/* Settings Tab */}
             {activeTab === "settings" && (
-                <div className="space-y-6 animate-fade-in-up [animation-delay:200ms]">
-                    <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-                        <h3 className="font-bold font-heading mb-4">Код для встраивания</h3>
-                        <div className="bg-muted p-4 rounded-xl border border-border font-mono text-sm overflow-x-auto text-muted-foreground">
-                            {embedCode}
-                        </div>
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(embedCode);
-                                alert("Скопировано!");
-                            }}
-                            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95 font-medium text-sm"
-                        >
-                            📋 Скопировать
-                        </button>
-                    </div>
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Код для встраивания</CardTitle>
+                            <CardDescription>Добавьте этот код на ваш сайт перед закрывающим тегом &lt;/body&gt;</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="bg-muted p-4 rounded-xl border border-border font-mono text-sm overflow-x-auto text-muted-foreground break-all">
+                                {embedCode}
+                            </div>
+                            <Button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(embedCode);
+                                    alert("Скопировано!");
+                                }}
+                                variant="secondary"
+                            >
+                                <Copy className="mr-2 h-4 w-4" />
+                                Скопировать код
+                            </Button>
+                        </CardContent>
+                    </Card>
 
-                    <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-                        <h3 className="font-bold font-heading mb-4">API ключ</h3>
-                        <div className="bg-muted p-4 rounded-xl border border-border font-mono text-sm text-muted-foreground">
-                            {project.apiKey}
-                        </div>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>API ключ</CardTitle>
+                            <CardDescription>Используйте этот ключ для доступа к API</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="bg-muted p-4 rounded-xl border border-border font-mono text-sm text-muted-foreground">
+                                {project.apiKey}
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                    <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-                        <h3 className="font-bold font-heading mb-4">Тема виджета</h3>
-                        <div className="flex gap-3 items-center">
-                            <div
-                                className="w-12 h-12 rounded-xl border border-border shadow-sm"
-                                style={{ backgroundColor: project.themeColor }}
-                            ></div>
-                            <span className="font-mono text-muted-foreground">{project.themeColor}</span>
-                        </div>
-                    </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Тема виджета</CardTitle>
+                            <CardDescription>Цвет акцентов вашего виджета</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex gap-4 items-center">
+                                <div
+                                    className="w-12 h-12 rounded-xl border border-border shadow-sm"
+                                    style={{ backgroundColor: project.themeColor }}
+                                ></div>
+                                <div className="font-mono text-muted-foreground bg-muted px-3 py-1 rounded-lg border border-border">
+                                    {project.themeColor}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             )}
         </div>

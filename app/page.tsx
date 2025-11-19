@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ArrowRight, Check, Github, Layout, Zap, Shield, Code2, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
@@ -35,19 +38,15 @@ export default async function HomePage() {
             <Link href="https://github.com" target="_blank" className="hover:text-foreground transition-colors">GitHub</Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Link
-              href="/api/auth/signin"
-              className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Войти
-            </Link>
-            <Link
-              href="/api/auth/signin"
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-medium transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95"
-            >
-              <Github size={16} />
-              Start for free
-            </Link>
+            <Button variant="ghost" asChild className="hidden md:flex">
+              <Link href="/api/auth/signin">Войти</Link>
+            </Button>
+            <Button asChild className="rounded-full">
+              <Link href="/api/auth/signin">
+                <Github size={16} />
+                Start for free
+              </Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -75,19 +74,17 @@ export default async function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up [animation-delay:600ms]">
-            <Link
-              href="/api/auth/signin"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3.5 rounded-full font-medium text-lg transition-all hover:shadow-xl hover:shadow-primary/25 active:scale-95"
-            >
-              <Github size={20} />
-              Подключить GitHub
-            </Link>
-            <Link
-              href="#demo"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-8 py-3.5 rounded-full font-medium text-lg transition-all active:scale-95"
-            >
-              Смотреть демо
-            </Link>
+            <Button size="lg" asChild className="w-full sm:w-auto rounded-full text-lg h-14 px-8">
+              <Link href="/api/auth/signin">
+                <Github size={20} />
+                Подключить GitHub
+              </Link>
+            </Button>
+            <Button size="lg" variant="secondary" asChild className="w-full sm:w-auto rounded-full text-lg h-14 px-8">
+              <Link href="#demo">
+                Смотреть демо
+              </Link>
+            </Button>
           </div>
 
           {/* UI Preview */}
@@ -120,12 +117,9 @@ export default async function HomePage() {
                       { type: 'improvement', text: 'Ускорено время загрузки на 40%' },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${item.type === 'feat' ? 'bg-green-500/10 text-green-600' :
-                          item.type === 'fix' ? 'bg-blue-500/10 text-blue-600' :
-                            'bg-gray-500/10 text-gray-600'
-                          }`}>
+                        <Badge variant={item.type === 'feat' ? 'success' : item.type === 'fix' ? 'info' : 'default'} className="uppercase tracking-wider">
                           {item.type}
-                        </span>
+                        </Badge>
                         <span className="text-sm font-medium">{item.text}</span>
                       </div>
                     ))}
@@ -194,14 +188,16 @@ export default async function HomePage() {
                   desc: "API доступ, TypeScript поддержка и легковесный скрипт без зависимостей."
                 }
               ].map((feature, i) => (
-                <div key={i} className="group relative p-8 rounded-3xl bg-card border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 overflow-hidden">
+                <Card key={i} className="group relative overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
                   <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 ${feature.color.replace('bg-', 'bg-gradient-to-br from-transparent to-')}`} />
-                  <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mb-6 shadow-lg shadow-primary/5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-bold font-heading mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-                </div>
+                  <CardHeader>
+                    <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mb-4 shadow-lg shadow-primary/5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                      {feature.icon}
+                    </div>
+                    <CardTitle className="text-xl mb-2">{feature.title}</CardTitle>
+                    <CardDescription className="text-base leading-relaxed">{feature.desc}</CardDescription>
+                  </CardHeader>
+                </Card>
               ))}
             </div>
           </div>
@@ -219,81 +215,89 @@ export default async function HomePage() {
 
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Free Plan */}
-              <div className="p-8 rounded-3xl border border-border bg-card relative hover:border-primary/30 transition-colors duration-300">
-                <h3 className="text-2xl font-bold font-heading mb-2">Hobby</h3>
-                <div className="text-4xl font-bold font-heading mb-6">$0 <span className="text-lg font-normal text-muted-foreground font-sans">/ мес</span></div>
-                <p className="text-muted-foreground mb-8">Идеально для пет-проектов и инди-хакеров.</p>
-
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-green-500" />
-                    </div>
-                    <span>1 Проект</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-green-500" />
-                    </div>
-                    <span>10 последних обновлений</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-green-500" />
-                    </div>
-                    <span>Базовая аналитика</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-muted-foreground">
-                    <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center text-[10px]">i</div>
-                    <span>Брендинг CommitLog</span>
-                  </li>
-                </ul>
-
-                <Link href="/api/auth/signin" className="block w-full py-3 px-6 text-center rounded-xl border border-border font-medium hover:bg-muted transition-colors">
-                  Начать бесплатно
-                </Link>
-              </div>
+              <Card className="rounded-3xl hover:border-primary/30 transition-colors duration-300">
+                <CardHeader>
+                  <CardTitle className="text-2xl mb-2">Hobby</CardTitle>
+                  <div className="text-4xl font-bold font-heading mb-6">$0 <span className="text-lg font-normal text-muted-foreground font-sans">/ мес</span></div>
+                  <CardDescription className="text-base">Идеально для пет-проектов и инди-хакеров.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4 mb-8">
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-green-500" />
+                      </div>
+                      <span>1 Проект</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-green-500" />
+                      </div>
+                      <span>10 последних обновлений</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-green-500" />
+                      </div>
+                      <span>Базовая аналитика</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-muted-foreground">
+                      <div className="w-6 h-6 rounded-full border border-muted-foreground/30 flex items-center justify-center text-[10px]">i</div>
+                      <span>Брендинг CommitLog</span>
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full rounded-xl h-12 text-base">
+                    <Link href="/api/auth/signin">Начать бесплатно</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
 
               {/* Pro Plan */}
-              <div className="p-8 rounded-3xl border border-primary/20 bg-primary/5 relative shadow-2xl shadow-primary/10 hover:shadow-primary/20 transition-all duration-300 scale-105 ring-1 ring-primary/20">
+              <Card className="rounded-3xl border-primary/20 bg-primary/5 relative shadow-2xl shadow-primary/10 hover:shadow-primary/20 transition-all duration-300 scale-105 ring-1 ring-primary/20">
                 <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
                   POPULAR
                 </div>
-                <h3 className="text-2xl font-bold font-heading mb-2 text-primary">Pro</h3>
-                <div className="text-4xl font-bold font-heading mb-6">$9 <span className="text-lg font-normal text-muted-foreground font-sans">/ мес</span></div>
-                <p className="text-muted-foreground mb-8">Для серьезных проектов и стартапов.</p>
-
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary" />
-                    </div>
-                    <span>Безлимитные проекты</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary" />
-                    </div>
-                    <span>Безлимитная история</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary" />
-                    </div>
-                    <span>Приоритетная поддержка</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary" />
-                    </div>
-                    <span>Без брендинга</span>
-                  </li>
-                </ul>
-
-                <Link href="/api/auth/signin" className="block w-full py-3 px-6 text-center rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25 hover:shadow-primary/40">
-                  Подключить Pro
-                </Link>
-              </div>
+                <CardHeader>
+                  <CardTitle className="text-2xl mb-2 text-primary">Pro</CardTitle>
+                  <div className="text-4xl font-bold font-heading mb-6">$9 <span className="text-lg font-normal text-muted-foreground font-sans">/ мес</span></div>
+                  <CardDescription className="text-base">Для серьезных проектов и стартапов.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4 mb-8">
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      <span>Безлимитные проекты</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      <span>Безлимитная история</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      <span>Приоритетная поддержка</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      <span>Без брендинга</span>
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className="w-full rounded-xl h-12 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40">
+                    <Link href="/api/auth/signin">Подключить Pro</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         </section>

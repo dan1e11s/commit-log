@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+import { headers } from "next/headers";
 
 export async function GET(request: Request) {
     try {
+        const ip = headers().get("x-forwarded-for") || "unknown";
+        const { success } = rateLimit(ip);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: "Too many requests" },
+                { status: 429 }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const apiKey = searchParams.get("key");
 
