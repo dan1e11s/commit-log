@@ -1,37 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { withAuth } from "@/lib/api-middleware";
+import { ProjectService } from "@/lib/services/project.service";
 
-export async function GET(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+export const GET = withAuth(async (req, session, params) => {
     try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user?.id) {
-            return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
-        }
-
-        const project = await prisma.project.findUnique({
-            where: { id: params.id },
-        });
-
-        if (!project) {
-            return NextResponse.json({ error: "Проект не найден" }, { status: 404 });
-        }
-
-        if (project.userId !== session.user.id) {
-            return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
-        }
-
+        const project = await ProjectService.getProject(params.id, session.user.id);
         return NextResponse.json(project);
-    } catch (error) {
-        console.error("Error fetching project:", error);
-        return NextResponse.json(
-            { error: "Ошибка получения проекта" },
-            { status: 500 }
-        );
+    } catch (error: any) {
+        if (error.message === "Project not found") {
+            return NextResponse.json({ error: error.message }, { status: 404 });
+        }
+        if (error.message === "Forbidden") {
+            return NextResponse.json({ error: error.message }, { status: 403 });
+        }
+        throw error;
     }
-}
+});

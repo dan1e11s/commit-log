@@ -2,61 +2,58 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Github, Loader2, Check } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface Repository {
     id: number;
     name: string;
     full_name: string;
-    owner: {
-        login: string;
-    };
-    description: string | null;
+    private: boolean;
 }
 
 export default function NewProjectPage() {
     const router = useRouter();
-    const [repositories, setRepositories] = useState<Repository[]>([]);
     const [loading, setLoading] = useState(true);
-    const [creating, setCreating] = useState(false);
-    const [selectedRepo, setSelectedRepo] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [repositories, setRepositories] = useState<Repository[]>([]);
+    const [selectedRepo, setSelectedRepo] = useState<string>("");
     const [themeColor, setThemeColor] = useState("#0ea5e9");
 
     useEffect(() => {
-        fetchRepositories();
+        fetch("/api/repositories")
+            .then((res) => res.json())
+            .then((data) => {
+                setRepositories(data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error("Failed to fetch repositories", err);
+                setLoading(false);
+            });
     }, []);
 
-    async function fetchRepositories() {
-        try {
-            const res = await fetch("/api/repositories");
-            if (res.ok) {
-                const data = await res.json();
-                setRepositories(data);
-            }
-        } catch (error) {
-            console.error("Error fetching repositories:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    async function handleSubmit(e: React.FormEvent) {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!selectedRepo) return;
 
-        setCreating(true);
+        setSubmitting(true);
+        const repo = repositories.find((r) => r.id.toString() === selectedRepo);
+
+        if (!repo) return;
 
         try {
-            const repo = repositories.find((r) => r.full_name === selectedRepo);
-            if (!repo) return;
-
             const res = await fetch("/api/projects", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     repoName: repo.name,
-                    repoOwner: repo.owner.login,
+                    repoOwner: repo.full_name.split("/")[0],
                     repoFullName: repo.full_name,
                     themeColor,
                 }),
@@ -67,115 +64,100 @@ export default function NewProjectPage() {
                 router.push(`/dashboard/projects/${project.id}`);
             }
         } catch (error) {
-            console.error("Error creating project:", error);
+            console.error("Failed to create project", error);
         } finally {
-            setCreating(false);
+            setSubmitting(false);
         }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="mb-8 animate-fade-in-up">
-                <Link
-                    href="/dashboard"
-                    className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 mb-4 group"
-                >
-                    <div className="p-1 rounded-full bg-secondary group-hover:bg-primary/10 transition-colors">
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                            />
-                        </svg>
-                    </div>
-                    Назад к проектам
-                </Link>
-                <h1 className="text-3xl font-bold font-heading">Новый проект</h1>
+            <div className="mb-8">
+                <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
+                    <Link href="/dashboard">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Назад к проектам
+                    </Link>
+                </Button>
             </div>
 
-            {loading ? (
-                <div className="bg-card rounded-2xl border border-border p-12 text-center animate-fade-in-up [animation-delay:100ms]">
-                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Загрузка репозиториев...</p>
-                </div>
-            ) : (
-                <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-8 shadow-xl shadow-black/5 animate-fade-in-up [animation-delay:100ms]">
-                    <div className="mb-8">
-                        <label className="block text-sm font-bold mb-2 text-foreground/80">
-                            Выберите репозиторий
-                        </label>
-                        <div className="relative">
-                            <select
-                                value={selectedRepo}
-                                onChange={(e) => setSelectedRepo(e.target.value)}
-                                className="w-full px-4 py-3 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
-                                required
-                            >
-                                <option value="">-- Выберите репозиторий --</option>
-                                {repositories.map((repo) => (
-                                    <option key={repo.id} value={repo.full_name}>
-                                        {repo.full_name}
-                                        {repo.description && ` - ${repo.description}`}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-2xl">Новый проект</CardTitle>
+                    <CardDescription>Подключите репозиторий GitHub для отслеживания изменений.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Выберите репозиторий
+                            </label>
+                            <div className="relative">
+                                <select
+                                    className="flex h-10 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                                    value={selectedRepo}
+                                    onChange={(e) => setSelectedRepo(e.target.value)}
+                                    required
+                                >
+                                    <option value="">Выберите репозиторий...</option>
+                                    {repositories.map((repo) => (
+                                        <option key={repo.id} value={repo.id}>
+                                            {repo.full_name} {repo.private ? "(Private)" : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-3 top-2.5 pointer-events-none text-muted-foreground">
+                                    <Github size={16} />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="mb-8">
-                        <label className="block text-sm font-bold mb-2 text-foreground/80">
-                            Цвет темы
-                        </label>
-                        <div className="flex gap-3 items-center">
-                            <div className="relative overflow-hidden rounded-lg w-14 h-12 ring-1 ring-border">
-                                <input
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                Цвет темы виджета
+                            </label>
+                            <div className="flex items-center gap-4">
+                                <Input
                                     type="color"
                                     value={themeColor}
                                     onChange={(e) => setThemeColor(e.target.value)}
-                                    className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 border-0"
+                                    className="w-12 h-12 p-1 rounded-lg cursor-pointer"
                                 />
+                                <div className="flex-1">
+                                    <div
+                                        className="h-10 rounded-lg flex items-center justify-center text-white text-sm font-medium shadow-sm transition-colors"
+                                        style={{ backgroundColor: themeColor }}
+                                    >
+                                        Предпросмотр кнопки
+                                    </div>
+                                </div>
                             </div>
-                            <input
-                                type="text"
-                                value={themeColor}
-                                onChange={(e) => setThemeColor(e.target.value)}
-                                className="flex-1 px-4 py-3 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
-                                placeholder="#0ea5e9"
-                            />
                         </div>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                            Этот цвет будет использоваться для акцентов в вашем виджете.
-                        </p>
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={creating || !selectedRepo}
-                        className="w-full px-6 py-3.5 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95 font-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-                    >
-                        {creating ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <span className="animate-spin w-4 h-4 border-2 border-white/50 border-t-white rounded-full" />
-                                Создание...
-                            </span>
-                        ) : (
-                            "Создать проект"
-                        )}
-                    </button>
-                </form>
-            )}
+                        <Button type="submit" className="w-full" disabled={submitting || !selectedRepo}>
+                            {submitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Создание...
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Создать проект
+                                </>
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     );
 }

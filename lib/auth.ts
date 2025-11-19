@@ -56,9 +56,12 @@ export const authOptions: NextAuthOptions = {
             }
             return true;
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             if (user) {
                 token.id = user.id;
+            }
+            if (account) {
+                token.accessToken = account.access_token;
             }
             return token;
         },
@@ -66,8 +69,13 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.id = token.id as string;
             }
+            session.accessToken = token.accessToken as string;
             return session;
         },
+    },
+    pages: {
+        signIn: "/auth/signin",
+        signOut: "/auth/signout",
     },
     session: {
         strategy: "jwt",

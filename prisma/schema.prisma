@@ -50,6 +50,8 @@ model Changelog {
   type        String   // FEAT, FIX, IMPROVEMENT
   status      String   @default("DRAFT") // DRAFT, PUBLISHED
   commitHash  String?  @unique
+  authorName  String?
+  authorAvatar String?
   publishedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

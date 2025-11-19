@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ArrowLeft, Save, Trash2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface Changelog {
     id: string;
@@ -58,7 +63,6 @@ export default function ChangelogEditorPage() {
             });
 
             if (res.ok) {
-                alert("Сохранено!");
                 router.push(`/dashboard/projects/${params.id}`);
             } else {
                 alert("Ошибка сохранения");
@@ -92,147 +96,141 @@ export default function ChangelogEditorPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
     }
 
     if (!changelog) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold mb-2">Чейнджлог не найден</h2>
-                    <Link
-                        href={`/dashboard/projects/${params.id}`}
-                        className="text-blue-600 hover:text-blue-700"
-                    >
-                        Вернуться к проекту
-                    </Link>
-                </div>
+            <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
+                <h2 className="text-2xl font-bold mb-2">Чейнджлог не найден</h2>
+                <Button asChild variant="link">
+                    <Link href={`/dashboard/projects/${params.id}`}>Вернуться к проекту</Link>
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white border-b">
-                <div className="container mx-auto px-4 py-4">
-                    <Link href="/dashboard" className="flex items-center gap-2 w-fit">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg"></div>
-                        <span className="text-xl font-bold">CommitLog</span>
-                    </Link>
-                </div>
-            </header>
-
-            <main className="container mx-auto px-4 py-8 max-w-4xl">
-                <div className="mb-6">
-                    <Link
-                        href={`/dashboard/projects/${params.id}`}
-                        className="text-blue-600 hover:text-blue-700 flex items-center gap-1 w-fit"
-                    >
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                            />
-                        </svg>
+        <div className="max-w-4xl mx-auto">
+            <div className="mb-6">
+                <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
+                    <Link href={`/dashboard/projects/${params.id}`}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
                         Назад к проекту
                     </Link>
+                </Button>
+            </div>
+
+            <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold font-heading">Редактор чейнджлога</h1>
+                <div className="flex gap-2">
+                    <Button variant="destructive" onClick={handleDelete} size="icon" title="Удалить">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
                 </div>
+            </div>
 
-                <h1 className="text-3xl font-bold mb-8">Редактор чейнджлога</h1>
-
-                <div className="bg-white rounded-lg border p-6 mb-6">
-                    <div className="mb-6">
-                        <label className="block text-sm font-semibold mb-2">Заголовок</label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Краткое описание изменения"
-                        />
-                    </div>
-
-                    <div className="mb-6">
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="block text-sm font-semibold">Описание (Markdown)</label>
-                            <button
-                                onClick={() => setShowPreview(!showPreview)}
-                                className="text-sm text-blue-600 hover:text-blue-700"
-                            >
-                                {showPreview ? "Редактировать" : "Превью"}
-                            </button>
-                        </div>
-                        {showPreview ? (
-                            <div className="border rounded-lg p-4 min-h-[200px] prose max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {description || "*Нет описания*"}
-                                </ReactMarkdown>
-                            </div>
-                        ) : (
-                            <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                                rows={10}
-                                placeholder="Подробное описание изменения (поддерживается Markdown)"
+            <div className="grid gap-6">
+                <Card>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium leading-none">Заголовок</label>
+                            <Input
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Краткое описание изменения"
                             />
-                        )}
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label className="block text-sm font-semibold mb-2">Тип</label>
-                            <select
-                                value={type}
-                                onChange={(e) => setType(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="FEAT">Новое</option>
-                                <option value="FIX">Исправлено</option>
-                                <option value="IMPROVEMENT">Улучшено</option>
-                            </select>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold mb-2">Статус</label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="DRAFT">Черновик</option>
-                                <option value="PUBLISHED">Опубликовано</option>
-                            </select>
-                        </div>
-                    </div>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none">Тип</label>
+                                <div className="relative">
+                                    <select
+                                        value={type}
+                                        onChange={(e) => setType(e.target.value)}
+                                        className="flex h-10 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                                    >
+                                        <option value="FEAT">Новое (Feature)</option>
+                                        <option value="FIX">Исправлено (Fix)</option>
+                                        <option value="IMPROVEMENT">Улучшено (Improvement)</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                        >
-                            {saving ? "Сохранение..." : "Сохранить"}
-                        </button>
-                        <button
-                            onClick={handleDelete}
-                            className="px-6 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition"
-                        >
-                            Удалить
-                        </button>
-                    </div>
-                </div>
-            </main>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none">Статус</label>
+                                <div className="relative">
+                                    <select
+                                        value={status}
+                                        onChange={(e) => setStatus(e.target.value)}
+                                        className="flex h-10 w-full items-center justify-between rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                                    >
+                                        <option value="DRAFT">Черновик</option>
+                                        <option value="PUBLISHED">Опубликовано</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm font-medium leading-none">Описание (Markdown)</label>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className="h-8 text-xs"
+                                >
+                                    {showPreview ? (
+                                        <>
+                                            <EyeOff className="mr-2 h-3 w-3" /> Редактировать
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Eye className="mr-2 h-3 w-3" /> Превью
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+
+                            {showPreview ? (
+                                <div className="min-h-[300px] rounded-xl border border-input bg-muted/30 p-4 prose prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {description || "*Нет описания*"}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                <textarea
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="flex min-h-[300px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono resize-y"
+                                    placeholder="Подробное описание изменения..."
+                                />
+                            )}
+                        </div>
+
+                        <div className="pt-4 flex justify-end">
+                            <Button onClick={handleSave} disabled={saving} size="lg" className="min-w-[150px]">
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Сохранение...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Сохранить
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
